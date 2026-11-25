@@ -20,6 +20,13 @@ def mean_confidence(path, lang=LANG, psm=3):
         return 0.0
     return sum(confs) / len(confs)
 
+def to_greyscale(image):
+    return image.convert("L")
+
+def binarize(image, threshold=150):
+    gray = to_greyscale(image)
+    return gray.point(lambda x: 0 if x < threshold else 255)
+
 if __name__ == "__main__":
 
     images = sorted(p for p in SAMPLES_DIR.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
@@ -33,3 +40,10 @@ if __name__ == "__main__":
 
     text = "Parallel computing is\na type"
     print(text.split())
+
+    photo = SAMPLES_DIR / "photo.jpg"
+    out_dir = SAMPLES_DIR.parent / "processed"
+    out_dir.mkdir(exist_ok=True)
+    binarize(Image.open(photo), 150).save(out_dir / "photo_bin_150.png")
+    print("original", round(mean_confidence(photo), 1))
+    print("bin 150", round(mean_confidence(out_dir / "photo_bin_150.png"), 1))
