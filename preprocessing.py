@@ -29,6 +29,15 @@ def otsu_binarize(image):
     return Image.fromarray(binary)
 
 
+def upscale(image, factor=2):
+    w, h = image.size
+    return image.resize((int(w * factor), int(h * factor)), Image.Resampling.LANCZOS)
+
+
+def median_denoise(image, size=3):
+    return image.filter(ImageFilter.MedianFilter(size=size))
+
+
 if __name__ == "__main__":
     from ocr import SAMPLES_DIR, mean_confidence
 
@@ -36,3 +45,4 @@ if __name__ == "__main__":
     print("otsu threshold:", otsu_threshold_value(photo))
     print("conf original:", round(mean_confidence(photo), 1))
     print("conf otsu:", round(mean_confidence(otsu_binarize(photo)), 1))
+    print(photo.size, upscale(photo).size)
