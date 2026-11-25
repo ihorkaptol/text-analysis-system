@@ -21,8 +21,15 @@ def mean_confidence(path, lang=LANG, psm=3):
     return sum(confs) / len(confs)
 
 if __name__ == "__main__":
-    # text = ocr_image(SAMPLES_DIR / "ua_screen.png")
-    # print(text[:300])
 
-    print(round(mean_confidence(SAMPLES_DIR / "en_screen.png"), 1))
-    print(round(mean_confidence(SAMPLES_DIR / "photo.jpg"), 1))
+    images = sorted(p for p in SAMPLES_DIR.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
+    print(f"{'file':<16}{'psm':>4}{'words':>7}{'conf':>8}")
+    for path in images:
+        for psm in (3, 6):
+            text = ocr_image(path, lang=LANG, psm=psm)
+            words = len(text.split())
+            conf = mean_confidence(path, lang=LANG, psm=psm)
+            print(f"{path.name:<16}{psm:>4}{words:>7}{conf:>8.1f}")
+
+    text = "Parallel computing is\na type"
+    print(text.split())
