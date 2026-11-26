@@ -38,6 +38,24 @@ def median_denoise(image, size=3):
     return image.filter(ImageFilter.MedianFilter(size=size))
 
 
+STEPS = {
+    "gray": to_grayscale,
+    "autocontrast": autocontrast,
+    "upscale": upscale,
+    "median": median_denoise,
+    "otsu": otsu_binarize
+}
+
+
+def preprocess(image, steps):
+    result = image
+    for name in steps:
+        if name not in STEPS:
+            raise ValueError(f"Unknown step: {name!r}. Available: {list(STEPS)}")
+        result = STEPS[name](result)
+    return result
+
+
 if __name__ == "__main__":
     from ocr import SAMPLES_DIR, mean_confidence
 
@@ -46,3 +64,7 @@ if __name__ == "__main__":
     print("conf original:", round(mean_confidence(photo), 1))
     print("conf otsu:", round(mean_confidence(otsu_binarize(photo)), 1))
     print(photo.size, upscale(photo).size)
+
+    out = preprocess(photo, ["gray", "upscale", "otsu"])
+    print(out.mode, out.size)
+    print(sorted(set(np.array(out).flatten().tolist())))
