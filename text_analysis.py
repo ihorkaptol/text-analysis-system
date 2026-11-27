@@ -3,6 +3,10 @@ import re
 from collections import Counter
 from dataclasses import asdict, dataclass
 
+from langdetect import DetectorFactory, detect
+from langdetect.lang_detect_exception import LangDetectException
+
+DetectorFactory.seed = 0
 WORD_RE = re.compile(r"[^\W\d_]+(?:['’ʼ-][^\W\d_]+)*")
 SENTENCE_END_RE = re.compile(r"[.!?…]+")
 
@@ -16,6 +20,21 @@ STOP_WORDS = {
     "with", "is", "are", "was", "were", "be", "it", "this", "that", "as", "by",
     "from", "not",
 }
+
+
+@dataclass
+class TextStats:
+    char_count: int
+    char_count_no_spaces: int
+    word_count: int
+    unique_word_count: int
+    sentence_count: int
+    avg_word_length: float
+    top_words: list
+    language: str
+
+    def to_dict(self):
+        return asdict(self)
 
 
 class TextAnalyzer:
@@ -34,12 +53,35 @@ class TextAnalyzer:
         meaningful = [w for w in words if w not in self.stop_words]
         return Counter(meaningful).most_common(self.top_n)
 
+    def detect_language(self, text):
+        try:
+            return detect(text)
+        except LangDetectException:
+            return "unknown"
+
+    def analyze(self, text):
+        text = text.strip()
+        words = self.words(text)
+        if words:
+            avg = round(sum(len(w) for w in words) / len(words), 2)
+        else:
+            avg = 0.0
+        return TextStats(
+            char_count=len(text),
+            char_count_no_spaces=len("".join(text.split())),
+            word_count=len(words),
+            unique_word_count=len(set(w for w in words)),
+            sentence_count=len(self.sentences(text)),
+            avg_word_length=avg,
+            top_words=self.top_words(words),
+            language=self.detect_language(text)
+        )
+
 
 if __name__ == "__main__":
+    sample = (
+        "Система аналізує друкований текст. Текст розпізнає Tesseract! "
+        "Чи правильно система рахує слова? Ось м'ята і п’ять слів-прикладів…"
+    )
     analyzer = TextAnalyzer(top_n=3)
-    print(analyzer.words("Текст 2026, ТЕКСТ! м'ята"))
-
-    print(analyzer.sentences("Перше речення. Друге!  Третє?"))
-    print(analyzer.sentences("Один. Два"))
-    print(analyzer.sentences("Один. Два. "))
-    print(analyzer.top_words(analyzer.words("кіт і кіт і пес та кіт")))
+    print(analyzer.analyze(sample))
