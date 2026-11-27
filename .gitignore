@@ -4,3 +4,4 @@ __pycache__/
 .idea/
 results/
 data/processed/
+.pytest_cache/
